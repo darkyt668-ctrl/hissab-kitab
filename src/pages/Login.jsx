@@ -32,7 +32,7 @@ export default function Login({ onLogin }) {
         const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
         onLogin(cred.user);
       } catch (err) {
-        console.error('Firebase Auth Error:', err.code, err.message);
+        console.error('Firebase Auth Error during signIn:', err.code, err.message);
 
         if (
           err.code === 'auth/unauthorized-domain' ||
@@ -40,24 +40,31 @@ export default function Login({ onLogin }) {
           err.message?.includes('unauthorized-domain')
         ) {
           setError('Firebase Domain Authorization Error: Please add "hisabkitab.online" to Authorized Domains in your Firebase Console (Authentication -> Settings -> Authorized Domains).');
-        } else if (err.code === 'auth/user-not-found') {
-          try {
-            const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-            onLogin(cred.user);
-          } catch (createErr) {
-            if (
-              createErr.code === 'auth/unauthorized-domain' ||
-              createErr.message?.includes('unauthorized domain')
-            ) {
-              setError('Firebase Domain Authorization Error: Please add "hisabkitab.online" to Authorized Domains in your Firebase Console.');
-            } else {
-              setError('Login failed. Please check your password or credentials.');
-            }
+          return;
+        }
+
+        // Since the email IS registered in the app (verified by isEmailRegistered above),
+        // but signInWithEmailAndPassword failed (which happens on 1st login when user doesn't exist in Firebase Auth yet,
+        // returning 'auth/user-not-found' OR modern 'auth/invalid-credential'), we attempt creating the Firebase Auth user:
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+          onLogin(cred.user);
+        } catch (createErr) {
+          console.error('Firebase Auth Error during createUser:', createErr.code, createErr.message);
+
+          if (
+            createErr.code === 'auth/unauthorized-domain' ||
+            createErr.message?.includes('unauthorized domain') ||
+            createErr.message?.includes('unauthorized-domain')
+          ) {
+            setError('Firebase Domain Authorization Error: Please add "hisabkitab.online" to Authorized Domains in your Firebase Console.');
+          } else if (createErr.code === 'auth/email-already-in-use') {
+            setError('Wrong password. Please try again.');
+          } else if (createErr.code === 'auth/weak-password') {
+            setError('Password should be at least 6 characters long.');
+          } else {
+            setError(createErr.message || 'Login failed. Please check your password or credentials.');
           }
-        } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-          setError('Wrong password. Please try again.');
-        } else {
-          setError(err.message || 'Login failed. Please check your credentials.');
         }
       }
     } catch (checkErr) {

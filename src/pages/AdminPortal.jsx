@@ -111,6 +111,7 @@ export default function AdminPortal({
     setShopForm({
       name: '',
       ownerName: '',
+      ownerEmail: '',
       phone: '',
       email: '',
       address: '',
