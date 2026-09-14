@@ -312,7 +312,7 @@ export default function App() {
 
   // ─── Main App ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative w-full max-w-full overflow-x-hidden">
       {/* SHOP OWNER FULL LOCKOUT SCREEN IF PAUSED */}
       {subStatus.isPaused && userRole === 'shop_owner' && (
         <ShopPausedOverlay
@@ -339,7 +339,7 @@ export default function App() {
         subStatus={subStatus}
       />
 
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => handleNavigate(tab)}
@@ -349,7 +349,7 @@ export default function App() {
           userRole={userRole}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden mb-16 md:mb-0">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 min-w-0 w-full max-w-full overflow-x-hidden mb-16 md:mb-0">
           {/* SUPER ADMIN PAUSED BANNER (Admin can still navigate & unpause) */}
           {subStatus.isPaused && userRole === 'admin' && (
             <ShopPausedOverlay

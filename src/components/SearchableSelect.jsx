@@ -119,7 +119,7 @@ export default function SearchableSelect({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 min-w-[200px]">
+        <div className="absolute z-50 left-0 mt-1.5 w-full min-w-[180px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
           {/* Search Input Box */}
           <div className="p-2 border-b border-slate-100 bg-slate-50/70">
             <div className="relative">

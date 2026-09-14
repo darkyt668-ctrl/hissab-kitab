@@ -284,10 +284,10 @@ export default function AdminPortal({
       </div>
 
       {/* Admin Navigation Tabs */}
-      <div className="flex bg-slate-200/70 p-1 rounded-2xl w-fit">
+      <div className="flex overflow-x-auto max-w-full p-1 rounded-2xl bg-slate-200/70 gap-1 scrollbar-none">
         <button
           onClick={() => setActiveTab('shops')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
             activeTab === 'shops' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -295,19 +295,19 @@ export default function AdminPortal({
         </button>
         <button
           onClick={() => setActiveTab('payments')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
             activeTab === 'payments' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          💳 EasyPaisa & Card Subscriptions ({transactions.length})
+          💳 Subscriptions ({transactions.length})
         </button>
         <button
           onClick={() => setActiveTab('settings')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
             activeTab === 'settings' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          ⚙️ Admin Payout Account Settings
+          ⚙️ Payout Settings
         </button>
       </div>
 
@@ -315,7 +315,7 @@ export default function AdminPortal({
       {activeTab === 'shops' && (
         <div className="space-y-6">
           {/* Subscription Enforcement Rules & Demo Guide */}
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 border border-indigo-500/30 shadow-md">
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 border border-indigo-500/30 shadow-md">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ export default function AdminPortal({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 text-xs font-semibold">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-semibold">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active (30d)
                 </span>

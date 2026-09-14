@@ -184,16 +184,21 @@ export default function Invoices({
       return alert('Please add at least one product with valid quantity');
     }
 
-    // Determine customer name
+    // Determine customer name & phone
     let finalCustName = customCustomerName;
+    let customerPhone = '';
     if (selectedCustomerId) {
       const party = parties.find(p => p.id === selectedCustomerId);
-      if (party) finalCustName = party.name;
+      if (party) {
+        finalCustName = party.name;
+        customerPhone = party.phone || '';
+      }
     }
 
     const newInvoice = onCreateInvoice({
       customerId: selectedCustomerId || null,
       customerName: finalCustName || 'Walk-in Cash Customer',
+      customerPhone,
       date: invoiceDate,
       items: validItems,
       subtotal,
@@ -272,7 +277,7 @@ export default function Invoices({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
           {['All', 'Paid', 'Partial', 'Unpaid'].map((status) => (
             <button
               key={status}
@@ -290,8 +295,8 @@ export default function Invoices({
       </div>
 
       {/* Invoices List Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-semibold uppercase tracking-wider">

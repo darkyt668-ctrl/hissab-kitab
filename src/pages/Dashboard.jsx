@@ -32,7 +32,7 @@ export default function Dashboard({
   const recentInvoices = invoices.slice(0, 5);
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 w-full max-w-full overflow-x-hidden">
       {/* Welcome Banner & Quick Action Buttons */}
       <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-600/15">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -189,7 +189,7 @@ export default function Dashboard({
       {/* Third Section: Recent Invoices & Expenses */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Invoices Table (2 Cols) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm w-full max-w-full overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-base">Recent Sales Invoices</h3>
@@ -203,8 +203,8 @@ export default function Dashboard({
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse text-xs min-w-[500px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider">
                   <th className="py-3 px-4">Invoice #</th>
