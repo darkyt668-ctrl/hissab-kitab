@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebase';
-import { Building2, LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { isEmailRegistered } from '../services/firestoreService';
+import { Building2, LogIn, Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -14,23 +15,54 @@ export default function Login({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    const cleanEmail = email.trim().toLowerCase();
+
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      onLogin(cred.user);
-    } catch (err) {
-      // If user doesn't exist, try creating (first-time setup for admin)
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        try {
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          onLogin(cred.user);
-        } catch (createErr) {
-          setError('Login failed. Please check your email and password.');
-        }
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setError('Wrong password. Please try again.');
-      } else {
-        setError(err.message || 'Login failed. Please try again.');
+      // 1. Security Check: Validate email against registered shops & admin accounts
+      const check = await isEmailRegistered(cleanEmail);
+      if (!check.registered) {
+        setError('This email is not registered to any shop.');
+        setLoading(false);
+        return;
       }
+
+      // 2. Attempt Authentication
+      try {
+        const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        onLogin(cred.user);
+      } catch (err) {
+        console.error('Firebase Auth Error:', err.code, err.message);
+
+        if (
+          err.code === 'auth/unauthorized-domain' ||
+          err.message?.includes('unauthorized domain') ||
+          err.message?.includes('unauthorized-domain')
+        ) {
+          setError('Firebase Domain Authorization Error: Please add "hisabkitab.online" to Authorized Domains in your Firebase Console (Authentication -> Settings -> Authorized Domains).');
+        } else if (err.code === 'auth/user-not-found') {
+          try {
+            const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+            onLogin(cred.user);
+          } catch (createErr) {
+            if (
+              createErr.code === 'auth/unauthorized-domain' ||
+              createErr.message?.includes('unauthorized domain')
+            ) {
+              setError('Firebase Domain Authorization Error: Please add "hisabkitab.online" to Authorized Domains in your Firebase Console.');
+            } else {
+              setError('Login failed. Please check your password or credentials.');
+            }
+          }
+        } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          setError('Wrong password. Please try again.');
+        } else {
+          setError(err.message || 'Login failed. Please check your credentials.');
+        }
+      }
+    } catch (checkErr) {
+      console.error('Email registration check failed:', checkErr);
+      setError('Error verifying account credentials. Please try again.');
     } finally {
       setLoading(false);
     }

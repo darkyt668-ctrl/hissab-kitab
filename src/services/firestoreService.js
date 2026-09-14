@@ -280,6 +280,36 @@ export async function getShopById(shopId) {
   return shops.find(s => s.id === shopId) || null;
 }
 
+export async function isEmailRegistered(email) {
+  if (!email || typeof email !== 'string') return { registered: false, role: null, shop: null };
+  const cleanEmail = email.trim().toLowerCase();
+
+  const pSettings = await getPlatformSettings();
+  const adminEmailFromSettings = pSettings?.adminEmail?.trim().toLowerCase();
+
+  const ADMIN_EMAILS = [
+    'admin@hissabkitab.pk',
+    'admin@hissabkitab.com',
+    adminEmailFromSettings
+  ].filter(Boolean);
+
+  if (ADMIN_EMAILS.includes(cleanEmail)) {
+    return { registered: true, role: 'admin', shop: null };
+  }
+
+  const shops = await getShops();
+  const matchedShop = shops.find(s => 
+    (s.ownerEmail && s.ownerEmail.trim().toLowerCase() === cleanEmail) ||
+    (s.email && s.email.trim().toLowerCase() === cleanEmail)
+  );
+
+  if (matchedShop) {
+    return { registered: true, role: 'shop_owner', shop: matchedShop };
+  }
+
+  return { registered: false, role: null, shop: null };
+}
+
 export async function saveShop(shopData) {
   const normalizedData = normalizeShopPlan(shopData);
   const shops = await getShops();

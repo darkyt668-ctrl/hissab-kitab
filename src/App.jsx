@@ -14,6 +14,7 @@ import {
   calculateShopSubscriptionStatus,
   toggleShopPause,
   simulateShopSubscription,
+  isEmailRegistered,
 } from './services/firestoreService';
 
 import Login from './pages/Login';
@@ -78,30 +79,40 @@ export default function App() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setAuthUser(user);
         try {
           // Seed if first time (only works when Firestore is online)
           await seedIfNeeded();
 
-          // Determine role: admin emails OR check if email matches a shop's ownerEmail
-          const allShops = await getShops();
-          const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase());
+          // Check if email is registered to any shop or admin account
+          const check = await isEmailRegistered(user.email);
+          if (!check.registered) {
+            await signOut(auth);
+            setAuthUser(null);
+            setAuthLoading(false);
+            alert('This email is not registered to any shop.');
+            return;
+          }
 
-          if (isAdmin) {
+          setAuthUser(user);
+          const allShops = await getShops();
+
+          if (check.role === 'admin') {
             setUserRoleState('admin');
             await refreshAllState(allShops[0]?.id || 'shop-1', 'admin');
           } else {
-            // Find which shop this user owns by email
-            const ownedShop = allShops.find(
-              s => s.ownerEmail?.toLowerCase() === user.email?.toLowerCase()
+            const ownedShop = check.shop || allShops.find(
+              s => (s.ownerEmail && s.ownerEmail.toLowerCase() === user.email?.toLowerCase()) ||
+                   (s.email && s.email.toLowerCase() === user.email?.toLowerCase())
             );
             if (ownedShop) {
               setUserRoleState('shop_owner');
               await refreshAllState(ownedShop.id, 'shop_owner');
             } else {
-              // Unknown user — default to first shop as shop_owner
-              setUserRoleState('shop_owner');
-              await refreshAllState(allShops[0]?.id || 'shop-1', 'shop_owner');
+              await signOut(auth);
+              setAuthUser(null);
+              setAuthLoading(false);
+              alert('This email is not registered to any shop.');
+              return;
             }
           }
         } catch (err) {
