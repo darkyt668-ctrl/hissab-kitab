@@ -282,8 +282,11 @@ export async function getShopById(shopId) {
 
 // ─── MASTER ADMIN EMAILS — Update this list to change who gets Super Admin access ───
 export const SUPER_ADMIN_EMAILS = [
-  'admin@hissabkitab.pk',
-  'admin@hissabkitab.com',
+  'admin@hissabkitab.pk',      // double-s (app internal)
+  'admin@hissabkitab.com',     // double-s (app internal)
+  'admin@hisabkitab.pk',       // single-s (domain variant)
+  'admin@hisabkitab.com',      // single-s (domain variant)
+  'admin@hisabkitab.online',   // domain email
 ];
 
 export async function isEmailRegistered(email) {
