@@ -280,31 +280,44 @@ export async function getShopById(shopId) {
   return shops.find(s => s.id === shopId) || null;
 }
 
+// ─── MASTER ADMIN EMAILS — Update this list to change who gets Super Admin access ───
+export const SUPER_ADMIN_EMAILS = [
+  'admin@hissabkitab.pk',
+  'admin@hissabkitab.com',
+];
+
 export async function isEmailRegistered(email) {
   if (!email || typeof email !== 'string') return { registered: false, role: null, shop: null };
   const cleanEmail = email.trim().toLowerCase();
 
-  const pSettings = await getPlatformSettings();
-  const adminEmailFromSettings = pSettings?.adminEmail?.trim().toLowerCase();
-
-  const ADMIN_EMAILS = [
-    'admin@hissabkitab.pk',
-    'admin@hissabkitab.com',
-    adminEmailFromSettings
-  ].filter(Boolean);
-
-  if (ADMIN_EMAILS.includes(cleanEmail)) {
+  // 1. Check hardcoded admin emails FIRST — no Firestore needed for this
+  if (SUPER_ADMIN_EMAILS.includes(cleanEmail)) {
     return { registered: true, role: 'admin', shop: null };
   }
 
-  const shops = await getShops();
-  const matchedShop = shops.find(s => 
-    (s.ownerEmail && s.ownerEmail.trim().toLowerCase() === cleanEmail) ||
-    (s.email && s.email.trim().toLowerCase() === cleanEmail)
-  );
+  // 2. Check platform settings admin email from Firestore/localStorage
+  try {
+    const pSettings = await getPlatformSettings();
+    const adminEmailFromSettings = pSettings?.adminEmail?.trim().toLowerCase();
+    if (adminEmailFromSettings && adminEmailFromSettings === cleanEmail) {
+      return { registered: true, role: 'admin', shop: null };
+    }
+  } catch (_) {
+    // ignore — platform settings unavailable (offline)
+  }
 
-  if (matchedShop) {
-    return { registered: true, role: 'shop_owner', shop: matchedShop };
+  // 3. Check if email matches any registered shop owner
+  try {
+    const shops = await getShops();
+    const matchedShop = shops.find(s =>
+      (s.ownerEmail && s.ownerEmail.trim().toLowerCase() === cleanEmail) ||
+      (s.email && s.email.trim().toLowerCase() === cleanEmail)
+    );
+    if (matchedShop) {
+      return { registered: true, role: 'shop_owner', shop: matchedShop };
+    }
+  } catch (_) {
+    // ignore — shops unavailable (offline)
   }
 
   return { registered: false, role: null, shop: null };

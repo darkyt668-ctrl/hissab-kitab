@@ -15,6 +15,7 @@ import {
   toggleShopPause,
   simulateShopSubscription,
   isEmailRegistered,
+  SUPER_ADMIN_EMAILS,
 } from './services/firestoreService';
 
 import Login from './pages/Login';
@@ -33,9 +34,6 @@ import ShopPausedOverlay from './components/ShopPausedOverlay';
 import SubscriptionReminderBanner from './components/SubscriptionReminderBanner';
 import ShopRenewalModal from './components/ShopRenewalModal';
 import { Loader2 } from 'lucide-react';
-
-// Admin emails — only these get 'admin' role
-const ADMIN_EMAILS = ['admin@hissabkitab.pk', 'admin@hissabkitab.com'];
 
 export default function App() {
   // ─── Auth State ───────────────────────────────────────────────────────────
@@ -83,6 +81,10 @@ export default function App() {
           // Seed if first time (only works when Firestore is online)
           await seedIfNeeded();
 
+          const pSettings = await getPlatformSettings();
+          const pAdminEmail = pSettings?.adminEmail?.trim().toLowerCase();
+          const userEmail = user.email?.trim().toLowerCase();
+
           // Check if email is registered to any shop or admin account
           const check = await isEmailRegistered(user.email);
           if (!check.registered) {
@@ -96,7 +98,9 @@ export default function App() {
           setAuthUser(user);
           const allShops = await getShops();
 
-          if (check.role === 'admin') {
+          const isAdmin = SUPER_ADMIN_EMAILS.includes(userEmail) || (pAdminEmail && pAdminEmail === userEmail) || check.role === 'admin';
+
+          if (isAdmin) {
             setUserRoleState('admin');
             await refreshAllState(allShops[0]?.id || 'shop-1', 'admin');
           } else {
