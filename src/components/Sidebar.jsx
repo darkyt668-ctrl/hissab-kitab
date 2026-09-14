@@ -40,6 +40,7 @@ export default function Sidebar({
     // SUPER ADMIN VIEW: Full Platform Access
     return [
       { id: 'admin_portal', label: '👑 Admin & All Shops', icon: Building2, badge: 'SaaS' },
+      { id: 'platform_settings', label: '⚙️ Platform Settings', icon: ShieldCheck, badge: 'Admin' },
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null },
       { id: 'inventory', label: 'Inventory / Stock', icon: Package, badgeKey: 'lowStock' },
       { id: 'invoices', label: 'Sales & Invoices', icon: Receipt, badge: null },

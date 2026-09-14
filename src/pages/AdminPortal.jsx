@@ -41,9 +41,26 @@ export default function AdminPortal({
   onRecordSubscriptionPayment,
   onSwitchToShopOwnerView,
   onTogglePause,
-  onSimulateSubscription
+  onSimulateSubscription,
+  initialTab = 'shops'
 }) {
-  const [activeTab, setActiveTab] = useState('shops'); // 'shops', 'payments', 'plans', 'settings'
+  const [activeTab, setActiveTab] = useState(initialTab); // 'shops', 'payments', 'plans', 'settings'
+
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  const handleDeleteShopClick = (shop) => {
+    if (shops.length <= 1) {
+      alert("At least one shop must remain active in the system.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete "${shop.name}"? All data for this shop will be permanently removed.`)) {
+      onDeleteShop(shop.id);
+    }
+  };
   
   // Modals
   const [isShopModalOpen, setIsShopModalOpen] = useState(false);
@@ -377,15 +394,31 @@ export default function AdminPortal({
                   }`}
                 >
                   <div>
-                    {/* Header: Name & Plan Badge */}
+                    {/* Header: Name, Plan Badge & Action Buttons */}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
                         <h4 className="font-extrabold text-slate-900 text-base leading-snug">{shop.name}</h4>
                         <p className="text-[11px] text-slate-400">{shop.tagline || 'Retail Business'}</p>
                       </div>
-                      <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        {shop.plan} Plan
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          {shop.plan} Plan
+                        </span>
+                        <button
+                          onClick={() => handleOpenEditShop(shop)}
+                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="Edit Shop Details"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteShopClick(shop)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Shop"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Owner & Contact details */}

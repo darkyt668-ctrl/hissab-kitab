@@ -388,7 +388,7 @@ export default function App() {
           )}
 
           {/* SUPER ADMIN PORTAL (Only visible in admin role) */}
-          {currentTab === 'admin_portal' && userRole === 'admin' && (
+          {(currentTab === 'admin_portal' || currentTab === 'platform_settings') && userRole === 'admin' && (
             <AdminPortal
               shops={shops}
               activeShopId={activeShopId}
@@ -402,6 +402,7 @@ export default function App() {
               onSwitchToShopOwnerView={handleToggleRole}
               onTogglePause={handleToggleShopPause}
               onSimulateSubscription={handleSimulateSubscription}
+              initialTab={currentTab === 'platform_settings' ? 'settings' : 'shops'}
             />
           )}
 
