@@ -156,7 +156,7 @@ export default function Login({ onLogin }) {
 
           {/* Hint */}
           <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
-            <p className='text-xs font-semibold text-amber-900 mb-1'>Contact Me to Open Your Account <a href="https://wa.me/qr/WORSKPTTU757M1">Contact on Whatsapp</a></p>
+            <p className='text-xs font-semibold text-amber-900 mb-1'>Contact Me to Open Your Account <a href="https://wa.me/qr/WORSKPTTU757M1">Click Here To Contact on Whatsapp</a></p>
             <p className="text-xs font-semibold text-amber-800 mb-1">First Time Login?</p>
             <p className="text-xs text-amber-700">
               Pehli baar email aur password enter karo — account automatically ban jaye ga.
