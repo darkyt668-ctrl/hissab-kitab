@@ -30,7 +30,7 @@ export default function Navbar({
 
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80 px-2.5 sm:px-6 py-2 sm:py-2.5 w-full max-w-full overflow-hidden">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80 px-2.5 sm:px-6 py-2 sm:py-2.5 w-full max-w-full">
       <div className="flex items-center justify-between gap-1.5 sm:gap-4 max-w-7xl mx-auto w-full min-w-0">
         {/* Left: Brand & Shop Switcher */}
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
@@ -69,31 +69,39 @@ export default function Navbar({
                     </button>
 
                     {isShopDropdownOpen && (
-                      <div 
-                        className="absolute left-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95"
-                        onClick={() => setIsShopDropdownOpen(false)}
-                      >
-                        <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Switch Store Database ({shops.length} Available)
-                        </div>
-                        {shops.map((s) => (
-                          <div
-                            key={s.id}
-                            onClick={() => onSelectShop(s.id)}
-                            className={`px-3 py-2 rounded-xl text-xs cursor-pointer flex items-center justify-between transition-colors ${
-                              s.id === activeShopId ? 'bg-indigo-50 text-indigo-900 font-bold' : 'hover:bg-slate-50 text-slate-700'
-                            }`}
-                          >
-                            <div className="truncate pr-2">
-                              <p className="truncate font-semibold">{s.name}</p>
-                              <span className="text-[10px] text-slate-400 font-normal">{s.plan} Plan • Rs. {s.monthlyPrice}/mo</span>
-                            </div>
-                            {s.id === activeShopId && (
-                              <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                            )}
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40 bg-transparent"
+                          onClick={() => setIsShopDropdownOpen(false)}
+                        />
+                        <div 
+                          className="absolute left-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95"
+                        >
+                          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Switch Store Database ({shops.length} Available)
                           </div>
-                        ))}
-                      </div>
+                          {shops.map((s) => (
+                            <div
+                              key={s.id}
+                              onClick={() => {
+                                onSelectShop(s.id);
+                                setIsShopDropdownOpen(false);
+                              }}
+                              className={`px-3 py-2 rounded-xl text-xs cursor-pointer flex items-center justify-between transition-colors ${
+                                s.id === activeShopId ? 'bg-indigo-50 text-indigo-900 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              <div className="truncate pr-2">
+                                <p className="truncate font-semibold">{s.name}</p>
+                                <span className="text-[10px] text-slate-400 font-normal">{s.plan} Plan • Rs. {s.monthlyPrice}/mo</span>
+                              </div>
+                              {s.id === activeShopId && (
+                                <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </>
                 ) : (
