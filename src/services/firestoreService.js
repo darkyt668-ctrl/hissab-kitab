@@ -164,6 +164,7 @@ export function calculateShopSubscriptionStatus(shop) {
 const shopCol = (shopId) => collection(db, 'shops', shopId, 'products');
 const partiesCol = (shopId) => collection(db, 'shops', shopId, 'parties');
 const invoicesCol = (shopId) => collection(db, 'shops', shopId, 'invoices');
+const purchaseInvoicesCol = (shopId) => collection(db, 'shops', shopId, 'purchaseInvoices');
 const expensesCol = (shopId) => collection(db, 'shops', shopId, 'expenses');
 const toArray = (snapshot) => snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -657,6 +658,99 @@ export async function deleteInvoice(invoiceId, shopId) {
   setLs(`invoices_${shopId}`, invoices);
   try {
     await deleteDoc(doc(db, 'shops', shopId, 'invoices', invoiceId));
+  } catch {}
+}
+
+// ─── PURCHASE INVOICES (Stock Addition on Purchase) ──────────────────────────
+export async function getPurchaseInvoices(shopId) {
+  try {
+    const snap = await getDocs(purchaseInvoicesCol(shopId));
+    if (!snap.empty) {
+      const items = toArray(snap);
+      setLs(`purchaseInvoices_${shopId}`, items);
+      return items;
+    }
+  } catch {}
+  return getLs(`purchaseInvoices_${shopId}`, []);
+}
+
+export async function createPurchaseInvoice(invoiceData, shopId) {
+  const shop = await getShopById(shopId) || { invoicePrefix: 'INV-', nextPurchaseInvoiceNum: 1 };
+  const piNumber = 'PI-' + (shop.nextPurchaseInvoiceNum || 1);
+
+  // Increment purchase invoice number
+  await saveShop({ ...shop, nextPurchaseInvoiceNum: (shop.nextPurchaseInvoiceNum || 1) + 1 });
+
+  const subtotal = Number(invoiceData.subtotal) || 0;
+  const discount = Number(invoiceData.discount) || 0;
+  const grandTotal = Math.max(0, subtotal - discount);
+  const paidAmount = Math.min(grandTotal, Number(invoiceData.paidAmount) || 0);
+  const balanceDue = grandTotal - paidAmount;
+
+  let status = 'Paid';
+  if (paidAmount === 0 && grandTotal > 0) status = 'Unpaid';
+  else if (balanceDue > 0) status = 'Partial';
+
+  const newId = 'pinv-' + Date.now();
+  const newInvoice = {
+    ...invoiceData,
+    id: newId,
+    invoiceNo: piNumber,
+    type: 'purchase',
+    date: invoiceData.date || new Date().toISOString().split('T')[0],
+    subtotal, discount,
+    total: grandTotal,
+    paidAmount,
+    balanceDue,
+    status,
+  };
+
+  // 1. ADD stock (purchase = stock increase) ✅
+  for (const item of newInvoice.items) {
+    if (item.productId) {
+      await adjustStock(item.productId, Number(item.qty || 1), shopId);
+    }
+  }
+
+  // 2. Add supplier payable balance if balance due (negative = we owe them)
+  if (balanceDue > 0 && invoiceData.supplierId) {
+    await recordPartyPayment(invoiceData.supplierId, balanceDue, 'payable', `Purchase Invoice ${piNumber}`, shopId);
+  }
+
+  // 3. Save purchase invoice
+  const purchaseInvoices = await getPurchaseInvoices(shopId);
+  const updatedInvoices = [newInvoice, ...purchaseInvoices];
+  setLs(`purchaseInvoices_${shopId}`, updatedInvoices);
+
+  try {
+    await setDoc(doc(db, 'shops', shopId, 'purchaseInvoices', newId), newInvoice);
+  } catch {}
+
+  return newInvoice;
+}
+
+export async function deletePurchaseInvoice(invoiceId, shopId) {
+  const allInvoices = await getPurchaseInvoices(shopId);
+  const invoice = allInvoices.find(i => i.id === invoiceId);
+
+  // Reverse stock (subtract what was added during purchase)
+  if (invoice && invoice.items) {
+    for (const item of invoice.items) {
+      if (item.productId) {
+        await adjustStock(item.productId, -Number(item.qty || 1), shopId);
+      }
+    }
+  }
+
+  // Reverse supplier payable balance
+  if (invoice && invoice.balanceDue > 0 && invoice.supplierId) {
+    await recordPartyPayment(invoice.supplierId, invoice.balanceDue, 'received', `Reversed: ${invoice.invoiceNo}`, shopId);
+  }
+
+  const updated = allInvoices.filter(i => i.id !== invoiceId);
+  setLs(`purchaseInvoices_${shopId}`, updated);
+  try {
+    await deleteDoc(doc(db, 'shops', shopId, 'purchaseInvoices', invoiceId));
   } catch {}
 }
 

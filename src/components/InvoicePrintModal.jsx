@@ -12,7 +12,11 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
   const tax = Number(invoice.tax || 0);
   const grandTotal = Number(invoice.total || 0);
   const paidAmount = Number(invoice.paidAmount !== undefined ? invoice.paidAmount : grandTotal);
-  const balanceDue = Number(invoice.balanceAdded !== undefined ? invoice.balanceAdded : Math.max(0, grandTotal - paidAmount));
+  const balanceDue = Number(
+    invoice.balanceDue !== undefined 
+      ? invoice.balanceDue 
+      : (invoice.balanceAdded !== undefined ? invoice.balanceAdded : Math.max(0, grandTotal - paidAmount))
+  );
 
   // Dedicated, bulletproof print function using an isolated iframe
   const handlePrint = () => {
@@ -293,18 +297,18 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
               ${businessProfile?.phone ? `<div class="shop-meta">📞 Tel: ${businessProfile.phone}</div>` : ''}
             </div>
             <div class="invoice-meta-box">
-              <div class="invoice-type-pill">Sales Tax Invoice</div>
+              <div class="invoice-type-pill">${invoice.type === 'purchase' ? 'Purchase Invoice' : 'Sales Tax Invoice'}</div>
               <div class="invoice-num">${invoice.invoiceNo}</div>
               <div class="invoice-date">Date: ${invoice.date}</div>
             </div>
           </div>
 
-          <!-- Customer Strip -->
+          <!-- Customer / Supplier Strip -->
           <div class="customer-row">
             <div>
-              <div class="cust-label">Billed To</div>
-              <div class="cust-name">${invoice.customerName || 'Walk-in Cash Customer'}</div>
-              ${invoice.customerPhone ? `<div class="cust-phone">Tel: ${invoice.customerPhone}</div>` : ''}
+              <div class="cust-label">${invoice.type === 'purchase' ? 'Supplier (Purchased From)' : 'Billed To'}</div>
+              <div class="cust-name">${invoice.type === 'purchase' ? (invoice.supplierName || 'Supplier') : (invoice.customerName || 'Walk-in Cash Customer')}</div>
+              ${(invoice.supplierPhone || invoice.customerPhone) ? `<div class="cust-phone">Tel: ${invoice.supplierPhone || invoice.customerPhone}</div>` : ''}
             </div>
             <div>
               <div class="cust-label" style="text-align: right; margin-bottom: 3px;">Payment Status</div>
@@ -473,21 +477,27 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
             )}
           </div>
           <div className="sm:text-right">
-            <span className="inline-block px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold rounded-lg text-xs uppercase tracking-wider mb-2">
-              Sales Tax Invoice
+            <span className={`inline-block px-3 py-1 font-bold rounded-lg text-xs uppercase tracking-wider mb-2 ${
+              invoice.type === 'purchase' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-indigo-50 border border-indigo-200 text-indigo-700'
+            }`}>
+              {invoice.type === 'purchase' ? 'Purchase Invoice' : 'Sales Tax Invoice'}
             </span>
             <p className="font-extrabold text-lg text-slate-900">{invoice.invoiceNo}</p>
             <p className="text-xs text-slate-500 mt-0.5">Date: {invoice.date}</p>
           </div>
         </div>
 
-        {/* Customer Info */}
+        {/* Customer / Supplier Info */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Billed To</span>
-            <p className="font-bold text-slate-900 text-base mt-0.5">{invoice.customerName || 'Cash Customer'}</p>
-            {invoice.customerPhone && (
-              <p className="text-xs text-slate-500 mt-0.5">Tel: {invoice.customerPhone}</p>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              {invoice.type === 'purchase' ? 'Supplier (Purchased From)' : 'Billed To'}
+            </span>
+            <p className="font-bold text-slate-900 text-base mt-0.5">
+              {invoice.type === 'purchase' ? (invoice.supplierName || 'Supplier') : (invoice.customerName || 'Cash Customer')}
+            </p>
+            {(invoice.supplierPhone || invoice.customerPhone) && (
+              <p className="text-xs text-slate-500 mt-0.5">Tel: {invoice.supplierPhone || invoice.customerPhone}</p>
             )}
           </div>
           <div className="sm:text-right">

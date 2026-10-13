@@ -9,6 +9,7 @@ import {
   getProducts, saveProduct, deleteProduct, adjustStock,
   getParties, saveParty, deleteParty, recordPartyPayment,
   getInvoices, createInvoice, deleteInvoice,
+  getPurchaseInvoices, createPurchaseInvoice, deletePurchaseInvoice,
   getExpenses, saveExpense, deleteExpense,
   computeFinancialMetrics,
   calculateShopSubscriptionStatus,
@@ -24,6 +25,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Invoices from './pages/Invoices';
+import PurchaseInvoices from './pages/PurchaseInvoices';
 import Parties from './pages/Parties';
 import Expenses from './pages/Expenses';
 import SubscriptionPlans from './pages/SubscriptionPlans';
@@ -59,6 +61,7 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [parties, setParties] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [metrics, setMetrics] = useState({
     totalSales: 0, totalCogs: 0, grossProfit: 0, totalExpenses: 0,
@@ -134,13 +137,14 @@ export default function App() {
   const refreshAllState = useCallback(async (targetShopId, role) => {
     setDataLoading(true);
     try {
-      const [allShops, pSettings, txList, prods, pts, invs, exps] = await Promise.all([
+      const [allShops, pSettings, txList, prods, pts, invs, pinvs, exps] = await Promise.all([
         getShops(),
         getPlatformSettings(),
         getSubscriptionTransactions(),
         getProducts(targetShopId),
         getParties(targetShopId),
         getInvoices(targetShopId),
+        getPurchaseInvoices(targetShopId),
         getExpenses(targetShopId),
       ]);
 
@@ -153,6 +157,7 @@ export default function App() {
       setProducts(prods);
       setParties(pts);
       setInvoices(invs);
+      setPurchaseInvoices(pinvs);
       setExpenses(exps);
       setMetrics(computeFinancialMetrics(invs, exps, prods, pts));
       setActiveShopIdState(targetShopId);
@@ -217,6 +222,17 @@ export default function App() {
 
   const handleDeleteInvoice = async (id) => {
     await deleteInvoice(id, activeShopId);
+    await refreshAllState(activeShopId, userRole);
+  };
+
+  const handleCreatePurchaseInvoice = async (invoiceData) => {
+    const created = await createPurchaseInvoice(invoiceData, activeShopId);
+    await refreshAllState(activeShopId, userRole);
+    return created;
+  };
+
+  const handleDeletePurchaseInvoice = async (id) => {
+    await deletePurchaseInvoice(id, activeShopId);
     await refreshAllState(activeShopId, userRole);
   };
 
@@ -440,6 +456,19 @@ export default function App() {
               onDeleteInvoice={handleDeleteInvoice}
               onViewInvoice={(inv) => setViewingInvoice(inv)}
               initialOpenNew={openNewInvoiceOnMount}
+            />
+          )}
+
+          {currentTab === 'purchase_invoices' && (
+            <PurchaseInvoices
+              purchaseInvoices={purchaseInvoices}
+              products={products}
+              parties={parties}
+              currency={profile.currency || 'Rs.'}
+              businessProfile={profile}
+              onCreatePurchaseInvoice={handleCreatePurchaseInvoice}
+              onDeletePurchaseInvoice={handleDeletePurchaseInvoice}
+              onViewInvoice={(inv) => setViewingInvoice(inv)}
             />
           )}
 
