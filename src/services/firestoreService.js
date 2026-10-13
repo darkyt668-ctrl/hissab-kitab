@@ -165,6 +165,8 @@ const shopCol = (shopId) => collection(db, 'shops', shopId, 'products');
 const partiesCol = (shopId) => collection(db, 'shops', shopId, 'parties');
 const invoicesCol = (shopId) => collection(db, 'shops', shopId, 'invoices');
 const purchaseInvoicesCol = (shopId) => collection(db, 'shops', shopId, 'purchaseInvoices');
+const saleReturnsCol = (shopId) => collection(db, 'shops', shopId, 'saleReturns');
+const purchaseReturnsCol = (shopId) => collection(db, 'shops', shopId, 'purchaseReturns');
 const expensesCol = (shopId) => collection(db, 'shops', shopId, 'expenses');
 const toArray = (snapshot) => snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -751,6 +753,176 @@ export async function deletePurchaseInvoice(invoiceId, shopId) {
   setLs(`purchaseInvoices_${shopId}`, updated);
   try {
     await deleteDoc(doc(db, 'shops', shopId, 'purchaseInvoices', invoiceId));
+  } catch {}
+}
+
+// ─── SALE RETURNS (Sale Return = Stock Plus & Customer Balance Adjust) ────────
+export async function getSaleReturns(shopId) {
+  try {
+    const snap = await getDocs(saleReturnsCol(shopId));
+    if (!snap.empty) {
+      const items = toArray(snap);
+      setLs(`saleReturns_${shopId}`, items);
+      return items;
+    }
+  } catch {}
+  return getLs(`saleReturns_${shopId}`, []);
+}
+
+export async function createSaleReturn(returnData, shopId) {
+  const shop = await getShopById(shopId) || { nextSaleReturnNum: 1 };
+  const srNumber = 'SR-' + (shop.nextSaleReturnNum || 1);
+
+  // Increment sale return number
+  await saveShop({ ...shop, nextSaleReturnNum: (shop.nextSaleReturnNum || 1) + 1 });
+
+  const totalAmount = Number(returnData.total) || 0;
+  const refundAmount = Number(returnData.refundAmount) || 0;
+  const balanceAdjusted = Math.max(0, totalAmount - refundAmount);
+
+  const newId = 'sret-' + Date.now();
+  const newReturn = {
+    ...returnData,
+    id: newId,
+    returnNo: srNumber,
+    type: 'sale_return',
+    date: returnData.date || new Date().toISOString().split('T')[0],
+    total: totalAmount,
+    refundAmount,
+    balanceAdjusted,
+  };
+
+  // 1. ADD stock back (sale return = items return to inventory = stock +) ✅
+  for (const item of newReturn.items) {
+    if (item.productId) {
+      await adjustStock(item.productId, Number(item.qty || 1), shopId);
+    }
+  }
+
+  // 2. Adjust customer balance (customer ne agar paise dene the to unka balance kam ho jaye) ✅
+  if (balanceAdjusted > 0 && returnData.customerId) {
+    await recordPartyPayment(returnData.customerId, balanceAdjusted, 'received', `Sale Return ${srNumber}`, shopId);
+  }
+
+  // 3. Save sale return record
+  const saleReturns = await getSaleReturns(shopId);
+  const updatedReturns = [newReturn, ...saleReturns];
+  setLs(`saleReturns_${shopId}`, updatedReturns);
+
+  try {
+    await setDoc(doc(db, 'shops', shopId, 'saleReturns', newId), newReturn);
+  } catch {}
+
+  return newReturn;
+}
+
+export async function deleteSaleReturn(returnId, shopId) {
+  const allReturns = await getSaleReturns(shopId);
+  const ret = allReturns.find(r => r.id === returnId);
+
+  // Reverse stock (subtract stock that was added back)
+  if (ret && ret.items) {
+    for (const item of ret.items) {
+      if (item.productId) {
+        await adjustStock(item.productId, -Number(item.qty || 1), shopId);
+      }
+    }
+  }
+
+  // Reverse customer balance adjustment
+  if (ret && ret.balanceAdjusted > 0 && ret.customerId) {
+    await recordPartyPayment(ret.customerId, ret.balanceAdjusted, 'payable', `Reversed Sale Return: ${ret.returnNo}`, shopId);
+  }
+
+  const updated = allReturns.filter(r => r.id !== returnId);
+  setLs(`saleReturns_${shopId}`, updated);
+  try {
+    await deleteDoc(doc(db, 'shops', shopId, 'saleReturns', returnId));
+  } catch {}
+}
+
+// ─── PURCHASE RETURNS (Purchase Return = Stock Minus & Supplier Balance Adjust) ─
+export async function getPurchaseReturns(shopId) {
+  try {
+    const snap = await getDocs(purchaseReturnsCol(shopId));
+    if (!snap.empty) {
+      const items = toArray(snap);
+      setLs(`purchaseReturns_${shopId}`, items);
+      return items;
+    }
+  } catch {}
+  return getLs(`purchaseReturns_${shopId}`, []);
+}
+
+export async function createPurchaseReturn(returnData, shopId) {
+  const shop = await getShopById(shopId) || { nextPurchaseReturnNum: 1 };
+  const prNumber = 'PR-' + (shop.nextPurchaseReturnNum || 1);
+
+  // Increment purchase return number
+  await saveShop({ ...shop, nextPurchaseReturnNum: (shop.nextPurchaseReturnNum || 1) + 1 });
+
+  const totalAmount = Number(returnData.total) || 0;
+  const refundAmount = Number(returnData.refundAmount) || 0;
+  const balanceAdjusted = Math.max(0, totalAmount - refundAmount);
+
+  const newId = 'pret-' + Date.now();
+  const newReturn = {
+    ...returnData,
+    id: newId,
+    returnNo: prNumber,
+    type: 'purchase_return',
+    date: returnData.date || new Date().toISOString().split('T')[0],
+    total: totalAmount,
+    refundAmount,
+    balanceAdjusted,
+  };
+
+  // 1. DEDUCT stock (purchase return = mal wapis bhej diya = stock -) ✅
+  for (const item of newReturn.items) {
+    if (item.productId) {
+      await adjustStock(item.productId, -Number(item.qty || 1), shopId);
+    }
+  }
+
+  // 2. Adjust supplier balance (supplier ke paise baqi the to udhar kam ho jaye) ✅
+  if (balanceAdjusted > 0 && returnData.supplierId) {
+    await recordPartyPayment(returnData.supplierId, balanceAdjusted, 'received', `Purchase Return ${prNumber}`, shopId);
+  }
+
+  // 3. Save purchase return record
+  const purchaseReturns = await getPurchaseReturns(shopId);
+  const updatedReturns = [newReturn, ...purchaseReturns];
+  setLs(`purchaseReturns_${shopId}`, updatedReturns);
+
+  try {
+    await setDoc(doc(db, 'shops', shopId, 'purchaseReturns', newId), newReturn);
+  } catch {}
+
+  return newReturn;
+}
+
+export async function deletePurchaseReturn(returnId, shopId) {
+  const allReturns = await getPurchaseReturns(shopId);
+  const ret = allReturns.find(r => r.id === returnId);
+
+  // Reverse stock (add back stock that was deducted)
+  if (ret && ret.items) {
+    for (const item of ret.items) {
+      if (item.productId) {
+        await adjustStock(item.productId, Number(item.qty || 1), shopId);
+      }
+    }
+  }
+
+  // Reverse supplier balance adjustment
+  if (ret && ret.balanceAdjusted > 0 && ret.supplierId) {
+    await recordPartyPayment(ret.supplierId, ret.balanceAdjusted, 'payable', `Reversed Purchase Return: ${ret.returnNo}`, shopId);
+  }
+
+  const updated = allReturns.filter(r => r.id !== returnId);
+  setLs(`purchaseReturns_${shopId}`, updated);
+  try {
+    await deleteDoc(doc(db, 'shops', shopId, 'purchaseReturns', returnId));
   } catch {}
 }
 

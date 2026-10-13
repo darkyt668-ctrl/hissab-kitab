@@ -10,6 +10,8 @@ import {
   getParties, saveParty, deleteParty, recordPartyPayment,
   getInvoices, createInvoice, deleteInvoice,
   getPurchaseInvoices, createPurchaseInvoice, deletePurchaseInvoice,
+  getSaleReturns, createSaleReturn, deleteSaleReturn,
+  getPurchaseReturns, createPurchaseReturn, deletePurchaseReturn,
   getExpenses, saveExpense, deleteExpense,
   computeFinancialMetrics,
   calculateShopSubscriptionStatus,
@@ -26,6 +28,7 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Invoices from './pages/Invoices';
 import PurchaseInvoices from './pages/PurchaseInvoices';
+import Returns from './pages/Returns';
 import Parties from './pages/Parties';
 import Expenses from './pages/Expenses';
 import SubscriptionPlans from './pages/SubscriptionPlans';
@@ -62,6 +65,8 @@ export default function App() {
   const [parties, setParties] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
+  const [saleReturns, setSaleReturns] = useState([]);
+  const [purchaseReturns, setPurchaseReturns] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [metrics, setMetrics] = useState({
     totalSales: 0, totalCogs: 0, grossProfit: 0, totalExpenses: 0,
@@ -137,7 +142,7 @@ export default function App() {
   const refreshAllState = useCallback(async (targetShopId, role) => {
     setDataLoading(true);
     try {
-      const [allShops, pSettings, txList, prods, pts, invs, pinvs, exps] = await Promise.all([
+      const [allShops, pSettings, txList, prods, pts, invs, pinvs, sRets, pRets, exps] = await Promise.all([
         getShops(),
         getPlatformSettings(),
         getSubscriptionTransactions(),
@@ -145,6 +150,8 @@ export default function App() {
         getParties(targetShopId),
         getInvoices(targetShopId),
         getPurchaseInvoices(targetShopId),
+        getSaleReturns(targetShopId),
+        getPurchaseReturns(targetShopId),
         getExpenses(targetShopId),
       ]);
 
@@ -158,6 +165,8 @@ export default function App() {
       setParties(pts);
       setInvoices(invs);
       setPurchaseInvoices(pinvs);
+      setSaleReturns(sRets);
+      setPurchaseReturns(pRets);
       setExpenses(exps);
       setMetrics(computeFinancialMetrics(invs, exps, prods, pts));
       setActiveShopIdState(targetShopId);
@@ -233,6 +242,28 @@ export default function App() {
 
   const handleDeletePurchaseInvoice = async (id) => {
     await deletePurchaseInvoice(id, activeShopId);
+    await refreshAllState(activeShopId, userRole);
+  };
+
+  const handleCreateSaleReturn = async (returnData) => {
+    const created = await createSaleReturn(returnData, activeShopId);
+    await refreshAllState(activeShopId, userRole);
+    return created;
+  };
+
+  const handleDeleteSaleReturn = async (id) => {
+    await deleteSaleReturn(id, activeShopId);
+    await refreshAllState(activeShopId, userRole);
+  };
+
+  const handleCreatePurchaseReturn = async (returnData) => {
+    const created = await createPurchaseReturn(returnData, activeShopId);
+    await refreshAllState(activeShopId, userRole);
+    return created;
+  };
+
+  const handleDeletePurchaseReturn = async (id) => {
+    await deletePurchaseReturn(id, activeShopId);
     await refreshAllState(activeShopId, userRole);
   };
 
@@ -469,6 +500,24 @@ export default function App() {
               onCreatePurchaseInvoice={handleCreatePurchaseInvoice}
               onDeletePurchaseInvoice={handleDeletePurchaseInvoice}
               onViewInvoice={(inv) => setViewingInvoice(inv)}
+            />
+          )}
+
+          {currentTab === 'returns' && (
+            <Returns
+              saleReturns={saleReturns}
+              purchaseReturns={purchaseReturns}
+              products={products}
+              parties={parties}
+              invoices={invoices}
+              purchaseInvoices={purchaseInvoices}
+              currency={profile.currency || 'Rs.'}
+              businessProfile={profile}
+              onCreateSaleReturn={handleCreateSaleReturn}
+              onDeleteSaleReturn={handleDeleteSaleReturn}
+              onCreatePurchaseReturn={handleCreatePurchaseReturn}
+              onDeletePurchaseReturn={handleDeletePurchaseReturn}
+              onViewReturn={(ret) => setViewingInvoice(ret)}
             />
           )}
 

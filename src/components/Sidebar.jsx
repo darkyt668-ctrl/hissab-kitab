@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Building2,
   ShieldCheck,
-  ShoppingCart
+  ShoppingCart,
+  RotateCcw
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -33,6 +34,7 @@ export default function Sidebar({
         { id: 'inventory', label: 'Inventory / Stock', icon: Package, badgeKey: 'lowStock' },
         { id: 'invoices', label: 'Sales & Invoices', icon: Receipt, badge: null },
         { id: 'purchase_invoices', label: 'Purchase Invoices', icon: ShoppingCart, badge: null },
+        { id: 'returns', label: 'Sale & Purchase Returns', icon: RotateCcw, badge: null },
         { id: 'parties', label: 'Customers & Suppliers', icon: Users, badge: null },
         { id: 'expenses', label: 'Daily Expenses', icon: Wallet, badge: null },
         { id: 'settings', label: 'Store Settings', icon: Settings, badge: null }
@@ -47,6 +49,7 @@ export default function Sidebar({
       { id: 'inventory', label: 'Inventory / Stock', icon: Package, badgeKey: 'lowStock' },
       { id: 'invoices', label: 'Sales & Invoices', icon: Receipt, badge: null },
       { id: 'purchase_invoices', label: 'Purchase Invoices', icon: ShoppingCart, badge: null },
+      { id: 'returns', label: 'Sale & Purchase Returns', icon: RotateCcw, badge: null },
       { id: 'parties', label: 'Customers & Suppliers', icon: Users, badge: null },
       { id: 'expenses', label: 'Daily Expenses', icon: Wallet, badge: null },
       { id: 'plans', label: 'Pricing & MRR Model', icon: Crown, badge: 'Admin' },

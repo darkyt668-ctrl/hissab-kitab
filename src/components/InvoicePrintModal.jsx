@@ -297,8 +297,13 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
               ${businessProfile?.phone ? `<div class="shop-meta">📞 Tel: ${businessProfile.phone}</div>` : ''}
             </div>
             <div class="invoice-meta-box">
-              <div class="invoice-type-pill">${invoice.type === 'purchase' ? 'Purchase Invoice' : 'Sales Tax Invoice'}</div>
-              <div class="invoice-num">${invoice.invoiceNo}</div>
+              <div class="invoice-type-pill">
+                ${invoice.type === 'purchase' ? 'Purchase Invoice' : 
+                  invoice.type === 'sale_return' ? 'Sale Return Voucher' :
+                  invoice.type === 'purchase_return' ? 'Purchase Return Voucher' :
+                  'Sales Tax Invoice'}
+              </div>
+              <div class="invoice-num">${invoice.invoiceNo || invoice.returnNo}</div>
               <div class="invoice-date">Date: ${invoice.date}</div>
             </div>
           </div>
@@ -306,13 +311,21 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
           <!-- Customer / Supplier Strip -->
           <div class="customer-row">
             <div>
-              <div class="cust-label">${invoice.type === 'purchase' ? 'Supplier (Purchased From)' : 'Billed To'}</div>
-              <div class="cust-name">${invoice.type === 'purchase' ? (invoice.supplierName || 'Supplier') : (invoice.customerName || 'Walk-in Cash Customer')}</div>
+              <div class="cust-label">
+                ${(invoice.type === 'purchase' || invoice.type === 'purchase_return') ? 'Supplier' : 'Customer'}
+              </div>
+              <div class="cust-name">
+                ${(invoice.type === 'purchase' || invoice.type === 'purchase_return') 
+                  ? (invoice.supplierName || 'Supplier') 
+                  : (invoice.customerName || 'Walk-in Cash Customer')}
+              </div>
               ${(invoice.supplierPhone || invoice.customerPhone) ? `<div class="cust-phone">Tel: ${invoice.supplierPhone || invoice.customerPhone}</div>` : ''}
             </div>
             <div>
-              <div class="cust-label" style="text-align: right; margin-bottom: 3px;">Payment Status</div>
-              <span class="status-badge">${invoice.status}</span>
+              <div class="cust-label" style="text-align: right; margin-bottom: 3px;">
+                ${invoice.status ? 'Payment Status' : 'Return Status'}
+              </div>
+              <span class="status-badge">${invoice.status || 'Processed'}</span>
             </div>
           </div>
 
@@ -478,11 +491,17 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
           </div>
           <div className="sm:text-right">
             <span className={`inline-block px-3 py-1 font-bold rounded-lg text-xs uppercase tracking-wider mb-2 ${
-              invoice.type === 'purchase' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-indigo-50 border border-indigo-200 text-indigo-700'
+              invoice.type === 'purchase' ? 'bg-purple-50 border border-purple-200 text-purple-700' :
+              invoice.type === 'sale_return' ? 'bg-indigo-50 border border-indigo-200 text-indigo-700' :
+              invoice.type === 'purchase_return' ? 'bg-purple-50 border border-purple-200 text-purple-700' :
+              'bg-indigo-50 border border-indigo-200 text-indigo-700'
             }`}>
-              {invoice.type === 'purchase' ? 'Purchase Invoice' : 'Sales Tax Invoice'}
+              {invoice.type === 'purchase' ? 'Purchase Invoice' : 
+               invoice.type === 'sale_return' ? 'Sale Return Voucher' :
+               invoice.type === 'purchase_return' ? 'Purchase Return Voucher' :
+               'Sales Tax Invoice'}
             </span>
-            <p className="font-extrabold text-lg text-slate-900">{invoice.invoiceNo}</p>
+            <p className="font-extrabold text-lg text-slate-900">{invoice.invoiceNo || invoice.returnNo}</p>
             <p className="text-xs text-slate-500 mt-0.5">Date: {invoice.date}</p>
           </div>
         </div>
@@ -491,24 +510,28 @@ export default function InvoicePrintModal({ isOpen, onClose, invoice, businessPr
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              {invoice.type === 'purchase' ? 'Supplier (Purchased From)' : 'Billed To'}
+              {(invoice.type === 'purchase' || invoice.type === 'purchase_return') ? 'Supplier' : 'Customer'}
             </span>
             <p className="font-bold text-slate-900 text-base mt-0.5">
-              {invoice.type === 'purchase' ? (invoice.supplierName || 'Supplier') : (invoice.customerName || 'Cash Customer')}
+              {(invoice.type === 'purchase' || invoice.type === 'purchase_return') 
+                ? (invoice.supplierName || 'Supplier') 
+                : (invoice.customerName || 'Cash Customer')}
             </p>
             {(invoice.supplierPhone || invoice.customerPhone) && (
               <p className="text-xs text-slate-500 mt-0.5">Tel: {invoice.supplierPhone || invoice.customerPhone}</p>
             )}
           </div>
           <div className="sm:text-right">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Payment Status</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              {invoice.status ? 'Payment Status' : 'Return Status'}
+            </span>
             <div className="mt-1">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
                 invoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                 invoice.status === 'Partial' ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                'bg-rose-100 text-rose-800 border-rose-300'
+                'bg-emerald-100 text-emerald-800 border-emerald-300'
               }`}>
-                {invoice.status}
+                {invoice.status || 'Processed'}
               </span>
             </div>
           </div>
