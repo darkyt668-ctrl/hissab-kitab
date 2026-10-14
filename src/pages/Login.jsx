@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { isEmailRegistered } from '../services/firestoreService';
-import { Building2, LogIn, Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
+import { Building2, LogIn, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import Skeleton from '@mui/material/Skeleton';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -141,17 +142,22 @@ export default function Login({ onLogin }) {
             )}
 
             {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-500/25"
-            >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Signing In...</>
-              ) : (
-                <><LogIn className="w-4 h-4" /> Sign In</>
-              )}
-            </button>
+            {loading ? (
+              <Skeleton 
+                variant="rounded" 
+                width="100%" 
+                height={48} 
+                sx={{ borderRadius: '0.75rem' }} 
+                animation="wave" 
+              />
+            ) : (
+              <button
+                type="submit"
+                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-500/25"
+              >
+                <LogIn className="w-4 h-4" /> Sign In
+              </button>
+            )}
           </form>
 
           {/* Hint */}

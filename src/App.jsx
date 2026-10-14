@@ -38,7 +38,8 @@ import InvoicePrintModal from './components/InvoicePrintModal';
 import ShopPausedOverlay from './components/ShopPausedOverlay';
 import SubscriptionReminderBanner from './components/SubscriptionReminderBanner';
 import ShopRenewalModal from './components/ShopRenewalModal';
-import { Loader2 } from 'lucide-react';
+import AppSkeleton from './components/skeletons/AppSkeleton';
+import PageSkeleton from './components/skeletons/PageSkeleton';
 
 export default function App() {
   // ─── Auth State ───────────────────────────────────────────────────────────
@@ -339,37 +340,14 @@ export default function App() {
   // ─── Current Shop Subscription Evaluation ─────────────────────────────────
   const subStatus = calculateShopSubscriptionStatus(profile);
 
-  // ─── Auth Loading Screen ──────────────────────────────────────────────────
+  // ─── Auth Skeleton Screen ──────────────────────────────────────────────────
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-xl">
-            <Loader2 className="w-8 h-8 text-white animate-spin" />
-          </div>
-          <p className="text-slate-600 font-semibold">Hissab Kitab loading...</p>
-          <p className="text-slate-400 text-sm mt-1">Connecting to cloud database</p>
-        </div>
-      </div>
-    );
+    return <AppSkeleton />;
   }
 
   // ─── Login Screen ─────────────────────────────────────────────────────────
   if (!authUser) {
     return <Login onLogin={(user) => setAuthUser(user)} />;
-  }
-
-  // ─── Data Loading Overlay ─────────────────────────────────────────────────
-  if (dataLoading && products.length === 0 && invoices.length === 0) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mx-auto mb-3" />
-          <p className="text-slate-600 font-semibold">Loading your shop data...</p>
-          <p className="text-slate-400 text-sm mt-1">Fetching from Firebase cloud</p>
-        </div>
-      </div>
-    );
   }
 
   // ─── Main App ─────────────────────────────────────────────────────────────
@@ -412,8 +390,12 @@ export default function App() {
         />
 
         <main className="flex-1 p-3 sm:p-6 lg:p-8 min-w-0 w-full max-w-full overflow-x-hidden mb-16 md:mb-0">
-          {/* SUPER ADMIN PAUSED BANNER (Admin can still navigate & unpause) */}
-          {subStatus.isPaused && userRole === 'admin' && (
+          {dataLoading ? (
+            <PageSkeleton tab={currentTab} />
+          ) : (
+            <>
+              {/* SUPER ADMIN PAUSED BANNER (Admin can still navigate & unpause) */}
+              {subStatus.isPaused && userRole === 'admin' && (
             <ShopPausedOverlay
               shop={profile}
               subStatus={subStatus}
@@ -561,6 +543,8 @@ export default function App() {
               onSaveProfile={handleSaveProfile}
               onRefresh={() => refreshAllState(activeShopId, userRole)}
             />
+          )}
+            </>
           )}
         </main>
       </div>

@@ -13,9 +13,9 @@ import {
   Lock,
   KeyRound,
   Eye,
-  EyeOff,
-  Loader2
+  EyeOff
 } from 'lucide-react';
+import Skeleton from '@mui/material/Skeleton';
 import { exportAllData, importAllData, resetToSampleData } from '../services/storage';
 
 export default function Settings({ profile, onSaveProfile, onRefresh }) {
@@ -368,17 +368,22 @@ export default function Settings({ profile, onSaveProfile, onRefresh }) {
           </div>
 
           <div className="flex justify-end pt-1">
-            <button
-              type="submit"
-              disabled={passLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-400 text-white font-bold text-xs rounded-xl shadow-md transition-all"
-            >
-              {passLoading ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Updating...</>
-              ) : (
-                <><KeyRound className="w-3.5 h-3.5" /> Update Password</>
-              )}
-            </button>
+            {passLoading ? (
+              <Skeleton 
+                variant="rounded" 
+                width={128} 
+                height={32} 
+                sx={{ borderRadius: '0.75rem' }} 
+                animation="wave" 
+              />
+            ) : (
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+              >
+                <KeyRound className="w-3.5 h-3.5" /> Update Password
+              </button>
+            )}
           </div>
         </form>
       </div>

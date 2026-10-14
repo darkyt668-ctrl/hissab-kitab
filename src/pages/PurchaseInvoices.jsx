@@ -288,7 +288,7 @@ export default function PurchaseInvoices({
                   ? 'bg-purple-600 text-white shadow-xs'
                   : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
               }`}
-            >
+            > 
               {status}
             </button>
           ))}
